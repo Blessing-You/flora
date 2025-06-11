@@ -1,11 +1,21 @@
 #include "Flora.hpp"
 #include "Color.hpp"
 #include "ColorPalette.hpp"
+#include "SchemeType.hpp"
 #include "cam/hct.h"
 #include <vector>
+#include "dynamiccolor/dynamic_scheme.h"
 #include "quantize/celebi.h"
 #include "quantize/wsmeans.h"
+#include "scheme/scheme_content.h"
+#include "scheme/scheme_expressive.h"
+#include "scheme/scheme_fidelity.h"
+#include "scheme/scheme_fruit_salad.h"
+#include "scheme/scheme_monochrome.h"
+#include "scheme/scheme_neutral.h"
+#include "scheme/scheme_rainbow.h"
 #include "scheme/scheme_tonal_spot.h"
+#include "scheme/scheme_vibrant.h"
 #include "score/score.h"
 #include "stb_image.h"
 #include "stb_image_resize2.h"
@@ -96,14 +106,46 @@ std::vector<material_color_utilities::Hct> Flora::getImageHct(const std::filesys
     return hctColors;
 }
 
-std::vector<flora::ColorPalette> Flora::generateColor(const std::filesystem::path& imagePath, bool isDark, float contrast, int bitmapSize) {
+material_color_utilities::DynamicScheme Flora::getDynamicSchemeByType(
+    const material_color_utilities::Hct& hct,
+    bool isDark,
+    float contrast,
+    flora::SchemeType type) {
+
+    switch(type) {
+        case flora::SchemeType::Content:
+            return material_color_utilities::SchemeContent(hct, isDark, contrast);
+        case flora::SchemeType::Expressive:
+            return material_color_utilities::SchemeExpressive(hct, isDark, contrast);
+        case flora::SchemeType::Fidelity:
+            return material_color_utilities::SchemeFidelity(hct, isDark, contrast);
+        case flora::SchemeType::FruitSalad:
+            return material_color_utilities::SchemeFruitSalad(hct, isDark, contrast);
+        case flora::SchemeType::Monochrome:
+            return material_color_utilities::SchemeMonochrome(hct, isDark, contrast);
+        case flora::SchemeType::Neutral:
+            return material_color_utilities::SchemeNeutral(hct, isDark, contrast);
+        case flora::SchemeType::Rainbow:
+            return material_color_utilities::SchemeRainbow(hct, isDark, contrast);
+        case flora::SchemeType::TonalSpot:
+            return material_color_utilities::SchemeTonalSpot(hct, isDark, contrast);
+        case flora::SchemeType::Vibrant:
+            return material_color_utilities::SchemeVibrant(hct, isDark, contrast);
+        default:
+            return material_color_utilities::SchemeTonalSpot(hct, isDark, contrast);
+    }
+}
+
+std::vector<flora::ColorPalette> Flora::generateColor(const std::filesystem::path& imagePath, 
+    bool isDark, float contrast, int bitmapSize, 
+    flora::SchemeType type) {
 
     std::vector<material_color_utilities::Hct> hctColors = getImageHct(imagePath, bitmapSize);
     std::vector<flora::ColorPalette> palettes;
-    std::vector<material_color_utilities::SchemeTonalSpot> schemes;
+    std::vector<material_color_utilities::DynamicScheme> schemes;
 
     for (const auto& hct : hctColors) {
-        material_color_utilities::SchemeTonalSpot scheme = material_color_utilities::SchemeTonalSpot(hct, isDark, contrast);
+        material_color_utilities::DynamicScheme scheme = getDynamicSchemeByType(hct, isDark, contrast, type);
         schemes.push_back(scheme);
     }
 
